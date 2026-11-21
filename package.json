@@ -1,0 +1,21 @@
+{
+  "name": "tracedeck",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run --workspaces --if-present build",
+    "test": "npm run --workspaces --if-present test",
+    "db:generate": "npm run --workspace=@tracedeck/database db:generate",
+    "db:push": "npm run --workspace=@tracedeck/database db:push",
+    "dev:api": "npm run --workspace=@tracedeck/api dev",
+    "dev:worker": "npm run --workspace=@tracedeck/worker dev",
+    "dev:web": "npm run --workspace=@tracedeck/web dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

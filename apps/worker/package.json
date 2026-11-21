@@ -1,0 +1,25 @@
+{
+  "name": "@tracedeck/worker",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tracedeck/database": "*",
+    "bullmq": "^5.7.14",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1",
+    "ipaddr.js": "^2.2.0",
+    "undici": "^6.18.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "tsx": "^4.10.5",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}
