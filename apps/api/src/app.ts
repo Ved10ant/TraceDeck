@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { authRouter } from "./modules/auth/auth.routes";
+import { monitorsRouter } from "./modules/monitors/monitors.routes";
 import { errorHandler } from "./middlewares/error.middleware";
 
 export const app = express();
@@ -19,6 +20,7 @@ app.get("/health", (req, res) => {
 
 // Versioned API routes
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/monitors", monitorsRouter);
 
 // 404 handler
 app.use((req, res) => {
