@@ -7,7 +7,7 @@ Following **Revision 1.1 (TraceDeck-Lite)**, progress is tracked phase by phase.
 | **Phase 0** | **Planning & Architecture**   | PRD, Architecture, Database schema, API spec, Threat model, Decisions record                        | **COMPLETE** | N/A           |
 | **Phase A** | **Foundation & Auth**         | Monorepo structure, Docker Compose (Postgres+Redis), Prisma schema, User/Workspace Auth             | **COMPLETE** | 10/10 Passed  |
 | **Phase B** | **Monitor CRUD & SSRF Guard** | Connect-time IP validation (custom DNS lookup), SSRF test cases (21.3), Monitor CRUD endpoints & UI | **COMPLETE** | 33/33 Passed  |
-| **Phase C** | **Scheduler & BullMQ Worker** | Polling scheduler, BullMQ worker, bounded concurrency, result persistence, 30d cleanup              | **PENDING**  | Pending       |
+| **Phase C** | **Scheduler & BullMQ Worker** | Polling scheduler, BullMQ worker, bounded concurrency, result persistence, 30d cleanup              | **COMPLETE** | 12/12 Passed  |
 | **Phase D** | **Incident State Machine**    | Partial unique index migration, threshold evaluation (3 fails / 2 passes), event timeline           | **PENDING**  | Pending       |
 | **Phase E** | **Webhook Notifications**     | HMAC-SHA256 signing, exponential backoff retries, delivery attempt logs                             | **PENDING**  | Pending       |
 | **Phase F** | **Analytics & Dashboard UI**  | Real metrics calculation (Uptime %, avg latency, P50/P95/P99, error rate), dark-mode UI             | **PENDING**  | Pending       |
@@ -17,4 +17,4 @@ Following **Revision 1.1 (TraceDeck-Lite)**, progress is tracked phase by phase.
 
 ## Current Focus
 
-Phase B complete. Next milestone: **Phase C (Scheduler & BullMQ Worker)**.
+Phase C complete. Next milestone: **Phase D (Incident State Machine & Partial Unique Index)**.
