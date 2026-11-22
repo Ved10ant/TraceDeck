@@ -11,16 +11,24 @@ export interface CheckExecutionResult {
   statusCode?: number;
   latencyMs?: number;
   errorCode?: string;
+  incidentAction?: "opened" | "resolved" | "none";
+  incidentId?: string;
+}
+
+export interface IncidentEvaluator {
+  evaluate(monitorId: string, monitorName: string, failures: number, successes: number): Promise<{ action: string; incidentId?: string }>;
 }
 
 export class MonitoringWorkerService {
   private db: typeof prisma;
   private worker: Worker<CheckJobPayload> | null = null;
   private customSafeCheck?: typeof safeCheck;
+  private incidentEvaluator?: IncidentEvaluator;
 
-  constructor(customDb?: typeof prisma, customCheck?: typeof safeCheck) {
+  constructor(customDb?: typeof prisma, customCheck?: typeof safeCheck, incidentEval?: IncidentEvaluator) {
     this.db = customDb || prisma;
     this.customSafeCheck = customCheck;
+    this.incidentEvaluator = incidentEval;
   }
 
   /**
@@ -78,8 +86,8 @@ export class MonitoringWorkerService {
       },
     });
 
-    // 2. Update Monitor state & failure counters
-    await this.db.monitor.update({
+    // 2. Update Monitor state & failure counters, then read back fresh counters
+    const updatedMonitor = await this.db.monitor.update({
       where: { id: monitorId },
       data: {
         lastCheckedAt: new Date(),
@@ -88,12 +96,29 @@ export class MonitoringWorkerService {
       },
     });
 
+    // 3. Evaluate incident state machine with fresh counters
+    let incidentAction: "opened" | "resolved" | "none" = "none";
+    let incidentId: string | undefined;
+
+    if (this.incidentEvaluator) {
+      const incidentResult = await this.incidentEvaluator.evaluate(
+        monitorId,
+        (updatedMonitor as any).name || monitorId,
+        updatedMonitor.consecutiveFailures,
+        updatedMonitor.consecutiveSuccesses
+      );
+      incidentAction = incidentResult.action as any;
+      incidentId = incidentResult.incidentId;
+    }
+
     return {
       monitorId,
       outcome,
       statusCode,
       latencyMs,
       errorCode,
+      incidentAction,
+      incidentId,
     };
   }
 
@@ -134,3 +159,4 @@ export class MonitoringWorkerService {
 }
 
 export const monitoringWorkerService = new MonitoringWorkerService();
+
