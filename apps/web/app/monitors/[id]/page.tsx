@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Navbar } from "../../../components/Navbar";
+import { DashboardShell } from "../../../components/dashboard/DashboardShell";
 import { apiRequest } from "../../../lib/api";
-import { ArrowLeft, Clock, Activity, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Button } from "../../../components/Button";
+import { Badge } from "../../../components/Badge";
+import {
+  ArrowLeft,
+  Clock,
+  Activity,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  Inbox,
+} from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -26,75 +36,54 @@ interface CheckResult {
 
 export default function MonitorDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const monitorId = params.id as string;
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const res = await apiRequest(`/analytics/monitors/${monitorId}?window=24h`);
-      if (res.success && res.data) {
-        setData(res.data);
-      } else {
-        // Fallback demo data
-        const dummyTimeSeries = Array.from({ length: 24 }, (_, i) => ({
-          timestamp: `${i}:00`,
-          avgLatencyMs: Math.floor(45 + Math.random() * 35 + (i === 14 ? 120 : 0)),
-          uptimePercentage: i === 14 ? 92 : 100,
-        }));
-
-        setData({
-          monitor: {
-            id: monitorId,
-            name: "Production Gateway API",
-            url: "https://api.tracedeck.internal/v1/health",
-            method: "GET",
-            intervalSeconds: 60,
-            enabled: true,
-            lastCheckedAt: new Date().toISOString(),
-          },
-          summary: {
-            window: "24h",
-            totalChecks: 1440,
-            successfulChecks: 1435,
-            failedChecks: 5,
-            uptimePercentage: 99.65,
-            latency: {
-              avgMs: 58,
-              p50Ms: 48,
-              p95Ms: 92,
-              p99Ms: 145,
-              minMs: 32,
-              maxMs: 310,
-            },
-            timeSeries: dummyTimeSeries,
-          },
-          recentChecks: [
-            { id: "c-1", outcome: "SUCCESS", statusCode: 200, latencyMs: 46, checkedAt: new Date().toISOString() },
-            { id: "c-2", outcome: "SUCCESS", statusCode: 200, latencyMs: 52, checkedAt: new Date(Date.now() - 60000).toISOString() },
-            { id: "c-3", outcome: "SUCCESS", statusCode: 200, latencyMs: 49, checkedAt: new Date(Date.now() - 120000).toISOString() },
-            { id: "c-4", outcome: "FAILURE", statusCode: 503, latencyMs: 240, checkedAt: new Date(Date.now() - 180000).toISOString() },
-            { id: "c-5", outcome: "SUCCESS", statusCode: 200, latencyMs: 55, checkedAt: new Date(Date.now() - 240000).toISOString() },
-          ],
-          activeIncidents: [],
-        });
-      }
-      setLoading(false);
+  async function loadData() {
+    setLoading(true);
+    const res = await apiRequest(`/analytics/monitors/${monitorId}?window=24h`);
+    if (res.success && res.data) {
+      setData(res.data);
+    } else {
+      setData(null);
     }
+    setLoading(false);
+  }
+
+  useEffect(() => {
     loadData();
   }, [monitorId]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
-          Loading monitor telemetry...
+      <DashboardShell title="Monitor Telemetry">
+        <div className="p-16 text-center text-xs font-mono text-warm-muted animate-pulse">
+          Loading endpoint telemetry & check results...
         </div>
-      </div>
+      </DashboardShell>
+    );
+  }
+
+  if (!data || !data.monitor) {
+    return (
+      <DashboardShell title="Monitor Not Found">
+        <div className="p-16 text-center space-y-4 max-w-md mx-auto">
+          <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h3 className="font-heading font-bold text-lg text-warm-ink dark:text-white">
+            Endpoint not found
+          </h3>
+          <p className="text-xs text-warm-muted dark:text-slate-400">
+            This monitor does not exist or your organization does not have access to it.
+          </p>
+          <Button href="/monitors" variant="outline" size="sm">
+            Back to Monitors
+          </Button>
+        </div>
+      </DashboardShell>
     );
   }
 
@@ -102,124 +91,155 @@ export default function MonitorDetailPage() {
   const isDown = activeIncidents && activeIncidents.length > 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Navigation Bar */}
-        <div>
-          <Link
-            href="/monitors"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition mb-3"
-          >
+    <DashboardShell
+      title={monitor.name}
+      subtitle={monitor.url}
+      actions={
+        <div className="flex items-center gap-2">
+          <Button href="/monitors" variant="outline" size="sm" className="gap-1.5">
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Monitors
-          </Link>
+            <span className="hidden sm:inline">Monitors</span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => loadData()} className="gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+        </div>
+      }
+    >
+      {/* Top Details Strip */}
+      <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-pill text-xs font-semibold ${
+              isDown
+                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+            }`}
+          >
+            {isDown ? <AlertTriangle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+            {isDown ? "Active Incident" : "Operational"}
+          </span>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold tracking-tight text-white">{monitor.name}</h1>
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                    isDown
-                      ? "bg-rose-950/60 text-rose-400 border border-rose-800/60"
-                      : "bg-emerald-950/60 text-emerald-400 border border-emerald-800/60"
-                  }`}
-                >
-                  {isDown ? "Active Incident" : "Operational"}
-                </span>
-              </div>
-              <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-3">
-                <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
-                  {monitor.method}
-                </span>
-                <span>{monitor.url}</span>
-                <span>• Check every {monitor.intervalSeconds}s</span>
-              </div>
-            </div>
-          </div>
+          <span className="font-mono text-xs px-2 py-0.5 rounded bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-warm-ink dark:text-slate-300">
+            {monitor.method}
+          </span>
+          <span className="text-xs text-warm-muted font-mono flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5 text-warm-muted/60" />
+            Every {monitor.intervalSeconds}s
+          </span>
         </div>
 
-        {/* Latency & Uptime Stat Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">Uptime (24h)</div>
-            <div className="text-2xl font-bold text-emerald-400 mt-1">{summary.uptimePercentage}%</div>
-            <div className="text-xs text-slate-500 mt-1">
-              {summary.successfulChecks} / {summary.totalChecks} checks
-            </div>
+        <div className="text-xs font-mono text-warm-muted dark:text-slate-400">
+          Last Check: {monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleString() : "Pending"}
+        </div>
+      </div>
+
+      {/* Latency & Uptime Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted">Uptime (24h)</span>
+          <div className="text-2xl sm:text-3xl font-bold font-stat text-emerald-600 dark:text-emerald-400">
+            {summary.uptimePercentage}%
           </div>
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">Median Latency (P50)</div>
-            <div className="text-2xl font-bold text-white mt-1">{summary.latency.p50Ms} ms</div>
-            <div className="text-xs text-slate-500 mt-1">Typical response time</div>
-          </div>
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">95th Percentile (P95)</div>
-            <div className="text-2xl font-bold text-cyan-400 mt-1">{summary.latency.p95Ms} ms</div>
-            <div className="text-xs text-slate-500 mt-1">95% faster than this</div>
-          </div>
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">99th Percentile (P99)</div>
-            <div className="text-2xl font-bold text-indigo-400 mt-1">{summary.latency.p99Ms} ms</div>
-            <div className="text-xs text-slate-500 mt-1">Worst-case tail latency</div>
-          </div>
+          <span className="text-xs text-warm-muted font-mono">
+            {summary.successfulChecks} / {summary.totalChecks} checks
+          </span>
         </div>
 
-        {/* Interactive Latency Area Chart */}
-        <div className="p-5 rounded-xl bg-slate-900/40 border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-emerald-400" />
-              Response Time & Latency Trends (24h)
-            </h3>
-            <span className="text-xs text-slate-500">Values in milliseconds (ms)</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted">Median (P50)</span>
+          <div className="text-2xl sm:text-3xl font-bold font-stat text-warm-ink dark:text-white">
+            {summary.latency.p50Ms} ms
           </div>
+          <span className="text-xs text-warm-muted font-mono">50% requests faster</span>
+        </div>
 
+        <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted">Tail SLA (P95)</span>
+          <div className="text-2xl sm:text-3xl font-bold font-stat text-cyan-600 dark:text-cyan-400">
+            {summary.latency.p95Ms} ms
+          </div>
+          <span className="text-xs text-warm-muted font-mono">95% requests faster</span>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted">Outlier (P99)</span>
+          <div className="text-2xl sm:text-3xl font-bold font-stat text-indigo-600 dark:text-indigo-400">
+            {summary.latency.p99Ms} ms
+          </div>
+          <span className="text-xs text-warm-muted font-mono">Worst-case tail</span>
+        </div>
+      </div>
+
+      {/* Latency Area Chart */}
+      <div className="p-6 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading text-sm font-semibold text-warm-ink dark:text-white flex items-center gap-2">
+            <Activity className="w-4 h-4 text-cta" />
+            Response Time Trend (24h)
+          </h3>
+          <span className="text-xs text-warm-muted font-mono">Values in milliseconds (ms)</span>
+        </div>
+
+        {summary.timeSeries.length === 0 ? (
+          <div className="h-48 flex items-center justify-center text-xs text-warm-muted font-mono">
+            No check results recorded in this time window yet.
+          </div>
+        ) : (
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={summary.timeSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  <linearGradient id="monLatencyGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FF5A1F" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#FF5A1F" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
                 <XAxis dataKey="timestamp" stroke="#64748b" fontSize={11} tickLine={false} />
                 <YAxis stroke="#64748b" fontSize={11} tickLine={false} unit="ms" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    borderColor: "#334155",
-                    borderRadius: "0.5rem",
+                    backgroundColor: "#12141A",
+                    borderColor: "#23262F",
+                    borderRadius: "0.75rem",
                     fontSize: "12px",
+                    color: "#F8FAFC",
                   }}
-                  itemStyle={{ color: "#34d399" }}
+                  itemStyle={{ color: "#FF5A1F" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="avgLatencyMs"
-                  stroke="#10b981"
+                  stroke="#FF5A1F"
                   strokeWidth={2}
                   fillOpacity={1}
-                  fill="url(#latencyGradient)"
-                  name="Avg Latency"
+                  fill="url(#monLatencyGrad)"
+                  name="Avg Latency (ms)"
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        )}
+      </div>
+
+      {/* Recent Check Logs Table */}
+      <div className="rounded-2xl border border-warm-border dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden shadow-card">
+        <div className="px-6 py-4 border-b border-warm-border dark:border-dark-border">
+          <h3 className="font-heading text-sm font-semibold text-warm-ink dark:text-white">
+            Recent Check History
+          </h3>
         </div>
 
-        {/* Recent Check Logs Table */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/80">
-            <h3 className="text-sm font-semibold text-white">Recent Execution History</h3>
+        {recentChecks.length === 0 ? (
+          <div className="p-8 text-center text-xs text-warm-muted font-mono">
+            No check logs recorded yet. Checks run according to the interval schedule.
           </div>
+        ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-900/60 text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-warm-bg dark:bg-dark-bg/80 text-[11px] uppercase tracking-wider text-warm-muted font-semibold border-b border-warm-border dark:border-dark-border">
                 <tr>
                   <th className="px-6 py-3">Outcome</th>
                   <th className="px-6 py-3">Status Code</th>
@@ -227,27 +247,27 @@ export default function MonitorDetailPage() {
                   <th className="px-6 py-3">Timestamp</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-xs font-mono">
+              <tbody className="divide-y divide-warm-border dark:divide-dark-border text-xs font-mono">
                 {recentChecks.map((check: CheckResult) => (
-                  <tr key={check.id} className="hover:bg-slate-850/40">
+                  <tr key={check.id} className="hover:bg-warm-bg/40 dark:hover:bg-dark-bg/40">
                     <td className="px-6 py-3 font-sans">
                       {check.outcome === "SUCCESS" ? (
-                        <span className="text-emerald-400 flex items-center gap-1 font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          SUCCESS
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> SUCCESS
                         </span>
                       ) : (
-                        <span className="text-rose-400 flex items-center gap-1 font-medium">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          {check.outcome}
+                        <span className="text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5" /> {check.outcome}
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-3 text-slate-300">{check.statusCode || "—"}</td>
-                    <td className="px-6 py-3 text-slate-300">
+                    <td className="px-6 py-3 text-warm-ink dark:text-slate-200">
+                      {check.statusCode || "—"}
+                    </td>
+                    <td className="px-6 py-3 text-warm-ink dark:text-slate-200">
                       {check.latencyMs !== null ? `${check.latencyMs} ms` : "—"}
                     </td>
-                    <td className="px-6 py-3 text-slate-500 font-sans">
+                    <td className="px-6 py-3 text-warm-muted font-sans">
                       {new Date(check.checkedAt).toLocaleString()}
                     </td>
                   </tr>
@@ -255,8 +275,8 @@ export default function MonitorDetailPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      </main>
-    </div>
+        )}
+      </div>
+    </DashboardShell>
   );
 }

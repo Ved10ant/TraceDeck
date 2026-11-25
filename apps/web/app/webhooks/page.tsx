@@ -1,9 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Navbar } from "../../components/Navbar";
+import { DashboardShell } from "../../components/dashboard/DashboardShell";
 import { apiRequest } from "../../lib/api";
-import { Bell, Plus, Shield, RefreshCw, Key, Check, Copy, ExternalLink } from "lucide-react";
+import { Button } from "../../components/Button";
+import {
+  Bell,
+  Plus,
+  Shield,
+  Key,
+  Copy,
+  Check,
+  RefreshCw,
+  ExternalLink,
+  Inbox,
+  Clock,
+  ChevronRight,
+  ShieldAlert,
+} from "lucide-react";
 
 interface Webhook {
   id: string;
@@ -13,15 +27,29 @@ interface Webhook {
   secret?: string;
 }
 
+interface Delivery {
+  id: string;
+  status: string;
+  attemptCount: number;
+  responseStatus: number | null;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
 export default function WebhooksPage() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formUrl, setFormUrl] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [url, setUrl] = useState("");
   const [formError, setFormError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [newlyCreatedSecret, setNewlyCreatedSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+
+  // Delivery drawer state
+  const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [loadingDeliveries, setLoadingDeliveries] = useState(false);
 
   async function fetchWebhooks() {
     setLoading(true);
@@ -29,21 +57,7 @@ export default function WebhooksPage() {
     if (res.success && Array.isArray(res.data)) {
       setWebhooks(res.data);
     } else {
-      // Demo webhooks fallback
-      setWebhooks([
-        {
-          id: "wh-1",
-          url: "https://api.example.com/webhooks/slack-alerts",
-          enabled: true,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "wh-2",
-          url: "https://api.example.com/webhooks/discord-alerts",
-          enabled: true,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+      setWebhooks([]);
     }
     setLoading(false);
   }
@@ -59,16 +73,40 @@ export default function WebhooksPage() {
 
     const res = await apiRequest("/webhooks", {
       method: "POST",
-      body: JSON.stringify({ url: formUrl }),
+      body: JSON.stringify({ url }),
     });
 
-    if (res.success) {
+    if (res.success && res.data) {
       setNewlyCreatedSecret(res.data.secret);
       fetchWebhooks();
     } else {
-      setFormError(res.error?.message || "Failed to create webhook (destination blocked by SSRF defense)");
+      const msg = res.error?.message || "";
+      if (
+        msg.includes("blocked_destination") ||
+        msg.includes("SSRF") ||
+        msg.includes("private") ||
+        msg.includes("loopback")
+      ) {
+        setFormError(
+          "Target webhook URL blocked by SSRF defense. Destination cannot target loopback, private subnets, or cloud metadata."
+        );
+      } else {
+        setFormError(msg || "Failed to create webhook. Please check the URL.");
+      }
     }
     setSubmitting(false);
+  }
+
+  async function openDeliveries(wh: Webhook) {
+    setSelectedWebhook(wh);
+    setLoadingDeliveries(true);
+    const res = await apiRequest(`/webhooks/${wh.id}/deliveries`);
+    if (res.success && Array.isArray(res.data)) {
+      setDeliveries(res.data);
+    } else {
+      setDeliveries([]);
+    }
+    setLoadingDeliveries(false);
   }
 
   function copySecret() {
@@ -80,189 +118,289 @@ export default function WebhooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Webhook Notifications</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Real-time incident dispatch signed with HMAC-SHA256 and exponential backoff retry (5s, 30s, 120s).
-            </p>
+    <DashboardShell
+      title="Webhook Notifications"
+      subtitle="Real-time incident dispatch signed with HMAC-SHA256 and exponential backoff retry (5s, 30s, 120s)"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchWebhooks()}
+            className="gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              setNewlyCreatedSecret(null);
+              setFormError("");
+              setUrl("");
+              setShowAddModal(true);
+            }}
+            withArrow
+          >
+            Add Webhook
+          </Button>
+        </div>
+      }
+    >
+      {/* Security Info Banner */}
+      <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card flex items-start gap-3.5">
+        <Shield className="w-5 h-5 text-cta shrink-0 mt-0.5" />
+        <div className="text-xs text-warm-muted dark:text-slate-300 leading-relaxed space-y-1">
+          <div className="font-semibold text-warm-ink dark:text-white">
+            Cryptographic Verification Standards:
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchWebhooks()}
-              className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition flex items-center gap-1.5 text-sm"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </button>
-            <button
+          <div>
+            Every outgoing webhook request includes <code className="font-mono text-cta bg-warm-bg dark:bg-dark-bg px-1.5 py-0.5 rounded border border-warm-border dark:border-dark-border">X-TraceDeck-Signature: sha256=...</code> and <code className="font-mono text-cta bg-warm-bg dark:bg-dark-bg px-1.5 py-0.5 rounded border border-warm-border dark:border-dark-border">X-TraceDeck-Timestamp</code> headers. Deliveries retry automatically if recipient servers fail.
+          </div>
+        </div>
+      </div>
+
+      {/* Webhooks Table or Honest Empty State */}
+      <div className="rounded-2xl border border-warm-border dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden shadow-card">
+        {loading ? (
+          <div className="p-12 text-center text-xs font-mono text-warm-muted animate-pulse">
+            Loading configured alert webhooks...
+          </div>
+        ) : webhooks.length === 0 ? (
+          /* Honest Empty State */
+          <div className="p-16 text-center space-y-4 max-w-md mx-auto">
+            <div className="w-14 h-14 rounded-full bg-cta/10 border border-cta/30 flex items-center justify-center text-cta mx-auto">
+              <Bell className="w-7 h-7" />
+            </div>
+            <h3 className="font-heading font-bold text-lg text-warm-ink dark:text-white">
+              No alert webhooks configured
+            </h3>
+            <p className="text-xs text-warm-muted dark:text-slate-400 leading-relaxed">
+              Add a webhook URL (Slack, Discord, PagerDuty, or custom receiver) to receive instant HMAC-signed incident notifications.
+            </p>
+            <Button
               onClick={() => {
                 setNewlyCreatedSecret(null);
-                setFormUrl("");
                 setFormError("");
-                setShowCreateModal(true);
+                setUrl("");
+                setShowAddModal(true);
               }}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition shadow-md shadow-emerald-950 flex items-center gap-1.5 text-sm"
+              withArrow
             >
-              <Plus className="w-4 h-4" />
-              Add Webhook
-            </button>
+              Add First Webhook
+            </Button>
           </div>
-        </div>
-
-        {/* Security Banner */}
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start gap-3">
-          <Shield className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-300 leading-relaxed">
-            <span className="font-semibold text-white">Cryptographic Verification:</span> Every outgoing webhook request includes the{" "}
-            <code className="text-emerald-300 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-              X-TraceDeck-Signature: sha256=...
-            </code>{" "}
-            and{" "}
-            <code className="text-emerald-300 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-              X-TraceDeck-Timestamp
-            </code>{" "}
-            headers to verify message authenticity and protect against replay attacks.
-          </div>
-        </div>
-
-        {/* Webhooks Table */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
+        ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-900/60 text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-warm-bg dark:bg-dark-bg/80 text-[11px] uppercase tracking-wider text-warm-muted font-semibold border-b border-warm-border dark:border-dark-border">
                 <tr>
                   <th className="px-6 py-3.5">Destination URL</th>
                   <th className="px-6 py-3.5">Status</th>
                   <th className="px-6 py-3.5">Created</th>
-                  <th className="px-6 py-3.5 text-right">Security</th>
+                  <th className="px-6 py-3.5 text-right">Delivery Log</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-xs">
+              <tbody className="divide-y divide-warm-border dark:divide-dark-border text-xs">
                 {webhooks.map((wh) => (
-                  <tr key={wh.id} className="hover:bg-slate-850/40">
-                    <td className="px-6 py-4 font-mono text-white truncate max-w-lg">{wh.url}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+                  <tr
+                    key={wh.id}
+                    className="hover:bg-warm-bg/40 dark:hover:bg-dark-bg/40 transition-colors"
+                  >
+                    <td className="px-6 py-4 font-mono font-medium text-warm-ink dark:text-white truncate max-w-md">
+                      {wh.url}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                         Active
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-warm-muted font-mono">
                       {new Date(wh.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="inline-flex items-center gap-1 text-slate-400 font-mono text-[11px]">
-                        <Key className="w-3 h-3 text-emerald-400" />
-                        HMAC-SHA256
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => openDeliveries(wh)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-warm-border dark:border-dark-border text-xs font-medium hover:border-cta hover:text-cta transition-colors"
+                      >
+                        View Attempts
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Create Incident Webhook</h3>
+      {/* Add Webhook Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-warm-border dark:border-dark-border">
+              <h3 className="font-heading text-lg font-bold text-warm-ink dark:text-white">
+                Create Incident Alert Webhook
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-warm-muted hover:text-warm-ink dark:hover:text-white text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {newlyCreatedSecret ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs space-y-1">
+                  <div className="font-semibold">Webhook Provisioned Successfully!</div>
+                  <div>
+                    Save your signing secret now. For security purposes, this secret is hashed and will not be displayed again.
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-warm-ink dark:text-slate-300 mb-1.5">
+                    HMAC Signing Secret (32-byte hex)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={newlyCreatedSecret}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-cta text-xs font-mono select-all"
+                    />
+                    <Button size="sm" variant="outline" onClick={copySecret} className="gap-1">
+                      {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                      <span>{copied ? "Copied" : "Copy"}</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-3 border-t border-warm-border dark:border-dark-border">
+                  <Button onClick={() => setShowAddModal(false)} size="sm">
+                    Done
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleCreateWebhook} className="space-y-4">
+                {formError && (
+                  <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5">
+                    <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                    <span className="leading-relaxed">{formError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-warm-ink dark:text-slate-300 mb-1.5">
+                    Destination Webhook URL
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://api.example.com/alerts/webhook"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-warm-ink dark:text-white text-sm font-mono focus:outline-none focus:border-cta"
+                  />
+                  <span className="text-[11px] text-warm-muted dark:text-slate-400 mt-1 block">
+                    Outbound requests pass through the Undici connect-time socket validator.
+                  </span>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-warm-border dark:border-dark-border">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={submitting} withArrow>
+                    {submitting ? "Validating & Creating..." : "Generate Webhook"}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Delivery Attempts Drawer */}
+      {selectedWebhook && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-dark-surface border-l border-warm-border dark:border-dark-border p-6 sm:p-8 space-y-6 shadow-2xl flex flex-col justify-between">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-warm-border dark:border-dark-border">
+                <div>
+                  <h3 className="font-heading font-bold text-base text-warm-ink dark:text-white">
+                    Delivery Attempt History
+                  </h3>
+                  <div className="font-mono text-xs text-warm-muted truncate max-w-xs mt-0.5">
+                    {selectedWebhook.url}
+                  </div>
+                </div>
                 <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="text-slate-400 hover:text-white text-sm"
+                  onClick={() => setSelectedWebhook(null)}
+                  className="p-1 text-warm-muted hover:text-warm-ink dark:hover:text-white"
                 >
                   ✕
                 </button>
               </div>
 
-              {newlyCreatedSecret ? (
-                <div className="space-y-4">
-                  <div className="p-3.5 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-emerald-200 text-xs space-y-2">
-                    <div className="font-semibold text-white">Webhook Created Successfully!</div>
-                    <div>
-                      Save your signing secret now. For security reasons, it will not be displayed again.
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">HMAC Signing Secret</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={newlyCreatedSecret}
-                        className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-emerald-400 text-xs font-mono select-all"
-                      />
-                      <button
-                        onClick={copySecret}
-                        className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-1"
-                      >
-                        {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                        {copied ? "Copied" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      onClick={() => setShowCreateModal(false)}
-                      className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition"
-                    >
-                      Done
-                    </button>
-                  </div>
+              {loadingDeliveries ? (
+                <div className="p-8 text-center text-xs font-mono text-warm-muted animate-pulse">
+                  Loading delivery attempt logs...
+                </div>
+              ) : deliveries.length === 0 ? (
+                <div className="p-8 text-center space-y-2 text-warm-muted">
+                  <Inbox className="w-8 h-8 mx-auto opacity-40" />
+                  <p className="text-xs">No delivery attempts recorded for this webhook yet.</p>
                 </div>
               ) : (
-                <form onSubmit={handleCreateWebhook} className="space-y-4">
-                  {formError && (
-                    <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs">
-                      {formError}
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                  {deliveries.map((d) => (
+                    <div
+                      key={d.id}
+                      className="p-3.5 rounded-xl bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border font-mono text-xs space-y-1"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`font-semibold ${d.status === "DELIVERED"
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-amber-600 dark:text-amber-400"
+                            }`}
+                        >
+                          {d.status}
+                        </span>
+                        <span className="text-[11px] text-warm-muted">
+                          {new Date(d.createdAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className="text-warm-muted text-[11px]">
+                        HTTP Status: {d.responseStatus || "—"} • Attempts: {d.attemptCount}
+                      </div>
+                      {d.errorMessage && (
+                        <div className="text-rose-500 text-[11px]">{d.errorMessage}</div>
+                      )}
                     </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Webhook URL</label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://api.example.com/webhooks/incident-channel"
-                      value={formUrl}
-                      onChange={(e) => setFormUrl(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-sm font-mono focus:outline-none focus:border-emerald-500"
-                    />
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Target destinations are evaluated through connect-time SSRF guards before dispatch.
-                    </span>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateModal(false)}
-                      className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm font-medium transition"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition disabled:opacity-50"
-                    >
-                      {submitting ? "Validating..." : "Generate Webhook"}
-                    </button>
-                  </div>
-                </form>
+                  ))}
+                </div>
               )}
             </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setSelectedWebhook(null)}
+              className="w-full"
+            >
+              Close Drawer
+            </Button>
           </div>
-        )}
-      </main>
-    </div>
+        </div>
+      )}
+    </DashboardShell>
   );
 }
