@@ -2,6 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
+@layer base {
+  :root {
+    --bg-page: #000000;
+    --surface: #0C0F16;
+    --text-primary: #FFFFFF;
+    --text-muted: #9BA9C4;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --cta-orange: #FF5A1F;
+    --cta-hover: #E84A10;
+  }
+
+  .dark {
+    --bg-page: #06070A;
+    --surface: #0C0F16;
+    --text-primary: #F8FAFC;
+    --text-muted: #9BA9C4;
+    --border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+  }
+}
+
+/* Accessible visible focus styles */
+:focus-visible {
+  outline: 2px solid #FF5A1F;
+  outline-offset: 2px;
+}
+
+/* Infinite Marquee */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Cosmoq Glassmorphism Surfaces */
+.cosmo-glass {
+  background: rgba(12, 15, 22, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset -3px -2px 8px 0px rgba(255, 255, 255, 0.05),
+    0px 24px 48px -12px rgba(0, 0, 0, 0.75);
+}
+
+.cosmo-glass-rim {
+  background: rgba(12, 15, 22, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0px 28px 44px -10px rgba(0, 0, 0, 0.85),
+    inset -4px 3px 10px -4px rgba(1, 117, 255, 0.55),
+    inset 3px -2px 10px -4px rgba(255, 172, 10, 0.5);
+}
+
+.cosmo-pill-nav {
+  background: rgba(12, 15, 22, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0px 10px 30px rgba(0, 0, 0, 0.6),
+    inset 0px 0px 2px 1px rgba(255, 255, 255, 0.08);
+}
+
+.cosmo-frost {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(12, 15, 22, 0.22) 100%);
+  mask-image: radial-gradient(65% 55% at 50% 55%, rgba(0, 0, 0, 0.05) 35%, #000 100%);
+  -webkit-mask-image: radial-gradient(65% 55% at 50% 55%, rgba(0, 0, 0, 0.05) 35%, #000 100%);
+}
+
+.cosmo-video-mask {
+  mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, rgba(0, 0, 0, 0) 100%);
+}
+
+.cosmo-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.35'/%3E%3C/svg%3E");
+  opacity: 0.12;
+}
+
+/* Dashboard light/dark glass helper */
+.glass-panel {
+  background: rgba(12, 15, 22, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Reduced motion safeguard */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2f3950;
+  border-radius: 9999px;
 }

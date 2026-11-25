@@ -2,9 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Navbar } from "../../components/Navbar";
+import { DashboardShell } from "../../components/dashboard/DashboardShell";
 import { apiRequest } from "../../lib/api";
-import { Activity, Plus, ExternalLink, RefreshCw, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { Button } from "../../components/Button";
+import { Badge } from "../../components/Badge";
+import {
+  Activity,
+  Plus,
+  RefreshCw,
+  ExternalLink,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  ShieldAlert,
+  Inbox,
+  PauseCircle,
+} from "lucide-react";
 
 interface Monitor {
   id: string;
@@ -21,11 +34,11 @@ interface Monitor {
 export default function MonitorsPage() {
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formName, setFormName] = useState("");
-  const [formUrl, setFormUrl] = useState("");
-  const [formMethod, setFormMethod] = useState("GET");
-  const [formInterval, setFormInterval] = useState(60);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [method, setMethod] = useState("GET");
+  const [interval, setInterval] = useState(60);
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,42 +48,7 @@ export default function MonitorsPage() {
     if (res.success && Array.isArray(res.data)) {
       setMonitors(res.data);
     } else {
-      // Fallback demo monitors for preview
-      setMonitors([
-        {
-          id: "demo-1",
-          name: "Stripe Payment Gateway",
-          url: "https://api.stripe.com/healthcheck",
-          method: "GET",
-          intervalSeconds: 60,
-          enabled: true,
-          lastCheckedAt: new Date().toISOString(),
-          consecutiveFailures: 0,
-          consecutiveSuccesses: 1420,
-        },
-        {
-          id: "demo-2",
-          name: "Auth0 Token Endpoint",
-          url: "https://auth.tracedeck.internal/oauth/token",
-          method: "HEAD",
-          intervalSeconds: 30,
-          enabled: true,
-          lastCheckedAt: new Date().toISOString(),
-          consecutiveFailures: 0,
-          consecutiveSuccesses: 850,
-        },
-        {
-          id: "demo-3",
-          name: "User Ingestion Service",
-          url: "https://ingest.tracedeck.io/ping",
-          method: "GET",
-          intervalSeconds: 120,
-          enabled: true,
-          lastCheckedAt: new Date().toISOString(),
-          consecutiveFailures: 3,
-          consecutiveSuccesses: 0,
-        },
-      ]);
+      setMonitors([]);
     }
     setLoading(false);
   }
@@ -87,20 +65,32 @@ export default function MonitorsPage() {
     const res = await apiRequest("/monitors", {
       method: "POST",
       body: JSON.stringify({
-        name: formName,
-        url: formUrl,
-        method: formMethod,
-        intervalSeconds: Number(formInterval),
+        name,
+        url,
+        method,
+        intervalSeconds: Number(interval),
       }),
     });
 
     if (res.success) {
-      setShowCreateModal(false);
-      setFormName("");
-      setFormUrl("");
+      setShowAddModal(false);
+      setName("");
+      setUrl("");
       fetchMonitors();
     } else {
-      setFormError(res.error?.message || "Failed to create monitor (check SSRF policy)");
+      const msg = res.error?.message || "";
+      if (
+        msg.includes("blocked_destination") ||
+        msg.includes("SSRF") ||
+        msg.includes("private") ||
+        msg.includes("loopback")
+      ) {
+        setFormError(
+          "Target destination blocked by connect-time SSRF defense. Cloud metadata (169.254.169.254), loopback (127.0.0.1), and private RFC1918 IP addresses cannot be probed."
+        );
+      } else {
+        setFormError(msg || "Failed to create monitor. Please check input parameters.");
+      }
     }
     setSubmitting(false);
   }
@@ -109,230 +99,289 @@ export default function MonitorsPage() {
   const failingCount = monitors.filter((m) => m.consecutiveFailures >= 3).length;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Monitors</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Active endpoint probes running through the BullMQ scheduler with SSRF protection.
-            </p>
+    <DashboardShell
+      title="Monitors"
+      subtitle="Active endpoint health probes managed by BullMQ with connect-time SSRF guards"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchMonitors()}
+            className="gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              setFormError("");
+              setShowAddModal(true);
+            }}
+            withArrow
+          >
+            Add Monitor
+          </Button>
+        </div>
+      }
+    >
+      {/* KPI Cards (Computed strictly from real state) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted dark:text-slate-400">
+            Total Endpoints
+          </span>
+          <div className="text-3xl font-bold font-stat text-warm-ink dark:text-white">
+            {monitors.length}
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchMonitors()}
-              className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 text-sm"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition shadow-md shadow-emerald-950 flex items-center gap-1.5 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Add Monitor
-            </button>
-          </div>
+          <span className="text-xs text-warm-muted dark:text-slate-500 font-mono">
+            {activeCount} scheduled in BullMQ
+          </span>
         </div>
 
-        {/* Quick KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Monitors</div>
-            <div className="text-2xl font-bold text-white mt-1">{monitors.length}</div>
-            <div className="text-xs text-slate-500 mt-1">{activeCount} actively scheduled</div>
+        <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted dark:text-slate-400">
+            Active Incidents
+          </span>
+          <div
+            className={`text-3xl font-bold font-stat ${
+              failingCount > 0
+                ? "text-rose-600 dark:text-rose-400"
+                : "text-emerald-600 dark:text-emerald-400"
+            }`}
+          >
+            {failingCount}
           </div>
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Incidents</div>
-            <div className={`text-2xl font-bold mt-1 ${failingCount > 0 ? "text-rose-400" : "text-emerald-400"}`}>
-              {failingCount}
+          <span className="text-xs text-warm-muted dark:text-slate-500 font-mono">
+            {failingCount > 0 ? "Degraded endpoints detected" : "All active probes passing"}
+          </span>
+        </div>
+
+        <div className="p-5 rounded-2xl bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border shadow-card space-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted dark:text-slate-400">
+            Probe Concurrency
+          </span>
+          <div className="text-3xl font-bold font-stat text-warm-ink dark:text-white">
+            10
+          </div>
+          <span className="text-xs text-warm-muted dark:text-slate-500 font-mono">
+            Bounded worker pool concurrency
+          </span>
+        </div>
+      </div>
+
+      {/* Monitors Table or Honest Empty State */}
+      <div className="rounded-2xl border border-warm-border dark:border-dark-border bg-white dark:bg-dark-surface overflow-hidden shadow-card">
+        {loading ? (
+          <div className="p-12 text-center text-xs text-warm-muted font-mono animate-pulse">
+            Fetching monitors from Redis & PostgreSQL...
+          </div>
+        ) : monitors.length === 0 ? (
+          /* Honest Empty State */
+          <div className="p-16 text-center space-y-4 max-w-md mx-auto">
+            <div className="w-14 h-14 rounded-full bg-cta/10 border border-cta/30 flex items-center justify-center text-cta mx-auto">
+              <Inbox className="w-7 h-7" />
             </div>
-            <div className="text-xs text-slate-500 mt-1">{failingCount > 0 ? "Degraded endpoints detected" : "All probes healthy"}</div>
+            <h3 className="font-heading text-lg font-bold text-warm-ink dark:text-white">
+              No monitors created yet
+            </h3>
+            <p className="text-xs text-warm-muted dark:text-slate-400 leading-relaxed">
+              Start observing your production APIs. Add a public HTTP endpoint to monitor availability, measure P50/P95 latency, and automate incidents.
+            </p>
+            <div className="pt-2">
+              <Button
+                onClick={() => {
+                  setFormError("");
+                  setShowAddModal(true);
+                }}
+                withArrow
+              >
+                Add Your First Monitor
+              </Button>
+            </div>
           </div>
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wider">Avg Check Interval</div>
-            <div className="text-2xl font-bold text-white mt-1">60s</div>
-            <div className="text-xs text-slate-500 mt-1">Distributed job queue</div>
-          </div>
-        </div>
-
-        {/* Monitors Table */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
+        ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-900/80 text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-warm-bg dark:bg-dark-bg/80 text-[11px] uppercase tracking-wider text-warm-muted font-semibold border-b border-warm-border dark:border-dark-border">
                 <tr>
                   <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5">Monitor</th>
+                  <th className="px-6 py-3.5">Endpoint</th>
                   <th className="px-6 py-3.5">Method</th>
                   <th className="px-6 py-3.5">Interval</th>
                   <th className="px-6 py-3.5">Last Checked</th>
-                  <th className="px-6 py-3.5 text-right">Action</th>
+                  <th className="px-6 py-3.5 text-right">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                      Loading monitors...
-                    </td>
-                  </tr>
-                ) : monitors.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                      No monitors configured yet. Click "Add Monitor" above.
-                    </td>
-                  </tr>
-                ) : (
-                  monitors.map((m) => {
-                    const isFailing = m.consecutiveFailures >= 3;
-                    return (
-                      <tr key={m.id} className="hover:bg-slate-850/50 transition">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {isFailing ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-950/60 text-rose-400 border border-rose-800/60">
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              Down
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Healthy
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-white">{m.name}</div>
-                          <div className="text-xs text-slate-400 font-mono truncate max-w-md">{m.url}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-mono text-xs text-slate-400">
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">{m.method}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-slate-500" />
-                          {m.intervalSeconds}s
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-slate-400 text-xs">
-                          {m.lastCheckedAt ? new Date(m.lastCheckedAt).toLocaleTimeString() : "Pending"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <Link
-                            href={`/monitors/${m.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition"
-                          >
-                            Details
-                            <ExternalLink className="w-3 h-3" />
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
+              <tbody className="divide-y divide-warm-border dark:divide-dark-border text-xs">
+                {monitors.map((m) => {
+                  const isFailing = m.consecutiveFailures >= 3;
+                  const isPaused = !m.enabled;
+
+                  return (
+                    <tr
+                      key={m.id}
+                      className="hover:bg-warm-bg/40 dark:hover:bg-dark-bg/40 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isPaused ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill text-[11px] font-semibold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
+                            <PauseCircle className="w-3.5 h-3.5" /> Paused
+                          </span>
+                        ) : isFailing ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill text-[11px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                            <AlertTriangle className="w-3.5 h-3.5" /> Down
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Healthy
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-warm-ink dark:text-white">
+                          {m.name}
+                        </div>
+                        <div className="font-mono text-[11px] text-warm-muted dark:text-slate-400 truncate max-w-sm">
+                          {m.url}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-mono">
+                        <span className="px-2 py-0.5 rounded bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-[11px]">
+                          {m.method}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-warm-muted font-mono flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-warm-muted/60" />
+                        {m.intervalSeconds}s
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-warm-muted font-mono">
+                        {m.lastCheckedAt
+                          ? new Date(m.lastCheckedAt).toLocaleTimeString()
+                          : "Pending first run"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <Link
+                          href={`/monitors/${m.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-warm-border dark:border-dark-border text-xs font-medium hover:border-cta hover:text-cta transition-colors"
+                        >
+                          View Telemetry
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Create Monitor Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Add New API Monitor</h3>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="text-slate-400 hover:text-white text-sm"
-                >
-                  ✕
-                </button>
+      {/* Add Monitor Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-dark-surface border border-warm-border dark:border-dark-border rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-warm-border dark:border-dark-border">
+              <h3 className="font-heading text-lg font-bold text-warm-ink dark:text-white">
+                Add New HTTP Monitor
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-warm-muted hover:text-warm-ink dark:hover:text-white text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {formError && (
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5">
+                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                <span className="leading-relaxed">{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateMonitor} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-warm-ink dark:text-slate-300 mb-1.5">
+                  Monitor Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Stripe Checkout Webhook"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-warm-ink dark:text-white text-sm focus:outline-none focus:border-cta"
+                />
               </div>
 
-              {formError && (
-                <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs">
-                  {formError}
-                </div>
-              )}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-warm-ink dark:text-slate-300 mb-1.5">
+                  Target Endpoint URL
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://api.example.com/health"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-warm-ink dark:text-white text-sm font-mono focus:outline-none focus:border-cta"
+                />
+                <span className="text-[11px] text-warm-muted dark:text-slate-400 mt-1 block">
+                  Connect-time SSRF defense automatically rejects loopback, RFC1918 subnets, and cloud metadata.
+                </span>
+              </div>
 
-              <form onSubmit={handleCreateMonitor} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Friendly Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Authentication Service"
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
-                  />
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-warm-ink dark:text-slate-300 mb-1.5">
+                    HTTP Method
+                  </label>
+                  <select
+                    value={method}
+                    onChange={(e) => setMethod(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-warm-ink dark:text-white text-sm focus:outline-none focus:border-cta font-mono"
+                  >
+                    <option value="GET">GET</option>
+                    <option value="HEAD">HEAD</option>
+                  </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Target URL (SSRF Protected)</label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://api.example.com/health"
-                    value={formUrl}
-                    onChange={(e) => setFormUrl(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-sm font-mono focus:outline-none focus:border-emerald-500"
-                  />
-                  <span className="text-[11px] text-slate-500 mt-1 block">
-                    Localhost, private IPs, and cloud metadata (169.254.169.254) are rejected.
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">HTTP Method</label>
-                    <select
-                      value={formMethod}
-                      onChange={(e) => setFormMethod(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="GET">GET</option>
-                      <option value="HEAD">HEAD</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Interval (seconds)</label>
-                    <select
-                      value={formInterval}
-                      onChange={(e) => setFormInterval(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value={30}>30s</option>
-                      <option value={60}>60s</option>
-                      <option value={120}>2m</option>
-                      <option value={300}>5m</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-sm font-medium transition"
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-warm-ink dark:text-slate-300 mb-1.5">
+                    Frequency
+                  </label>
+                  <select
+                    value={interval}
+                    onChange={(e) => setInterval(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 rounded-xl bg-warm-bg dark:bg-dark-bg border border-warm-border dark:border-dark-border text-warm-ink dark:text-white text-sm focus:outline-none focus:border-cta font-mono"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition shadow-md shadow-emerald-950 disabled:opacity-50"
-                  >
-                    {submitting ? "Validating & Creating..." : "Create Monitor"}
-                  </button>
+                    <option value={30}>Every 30s</option>
+                    <option value={60}>Every 60s</option>
+                    <option value={120}>Every 2m</option>
+                    <option value={300}>Every 5m</option>
+                  </select>
                 </div>
-              </form>
-            </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-warm-border dark:border-dark-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submitting} withArrow>
+                  {submitting ? "Validating & Creating..." : "Create Monitor"}
+                </Button>
+              </div>
+            </form>
           </div>
-        )}
-      </main>
-    </div>
+        </div>
+      )}
+    </DashboardShell>
   );
 }

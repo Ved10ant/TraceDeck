@@ -188,9 +188,21 @@ npm run dev:worker
 npm run dev:web
 ```
 
-- **Web Dashboard**: `http://localhost:3000`
+- **Web Dashboard & Landing**: `http://localhost:3000`
 - **REST API**: `http://localhost:4000`
 - **API Healthcheck**: `http://localhost:4000/health`
+
+---
+
+## 🎨 Design System & Frontend Architecture
+
+TraceDeck features a dual-theme design system combining a warm off-white editorial landing page with a dense, dark-mode developer dashboard (inspired by Linear and Better Stack):
+
+* **Typography**: Instrument Sans (Display headings with tight tracking), Instrument Serif (Editorial italic highlights), Inter (Body UI), JetBrains Mono (Code, telemetry & latencies), and Space Grotesk (Stat numerals).
+* **Landing Palette**: Warm canvas (`#F6F5F1`), crisp surfaces (`#FFFFFF`), dark contrast band (`#121316`), and text ink (`#0E0E10`).
+* **Conversion CTA**: Signature orange pill (`#FF5A1F`, hover `#E84A10`) with animated circular arrow icon — reserved strictly for primary conversions to prevent visual confusion with alerts or error states.
+* **Dashboard Theme**: Default dark slate (`#0A0B0F` bg, `#12141A` surface, `#23262F` border) with an instant light theme toggle.
+* **Data Honesty**: Zero fabricated vanity metrics, fake testimonials, or hardcoded mock monitors. Live dashboard features real empty states with guided onboarding, while landing page preview cards are visibly labeled with an amber `SAMPLE DATA` badge.
 
 ---
 

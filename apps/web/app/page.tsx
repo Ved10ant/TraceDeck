@@ -1,33 +1,59 @@
+import { SmoothScroll } from "../components/SmoothScroll";
+import { LandingNav } from "../components/LandingNav";
+import { HeroSection } from "../components/landing/HeroSection";
+import { MarqueeSection } from "../components/landing/MarqueeSection";
+import { DifferentiatorsSection } from "../components/landing/DifferentiatorsSection";
+import { TabbedShowcase } from "../components/landing/TabbedShowcase";
+import { HowItWorksSection } from "../components/landing/HowItWorksSection";
+import { DeepDiveSection } from "../components/landing/DeepDiveSection";
+import { SelfHostSection } from "../components/landing/SelfHostSection";
+import { AudienceSection } from "../components/landing/AudienceSection";
+import { FaqSection } from "../components/landing/FaqSection";
+import { FinalCtaSection } from "../components/landing/FinalCtaSection";
+import { LandingFooter } from "../components/LandingFooter";
+
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 text-center">
-      <div className="max-w-2xl space-y-4">
-        <div className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-emerald-400 uppercase bg-emerald-950/60 border border-emerald-800/80 rounded-full">
-          All Systems Operational
-        </div>
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-white">
-          TraceDeck
-        </h1>
-        <p className="text-slate-400 text-lg">
-          Developer-first API Observability & Incident Management SaaS.
-        </p>
-        <div className="pt-4 flex justify-center gap-4">
-          <a
-            href="/monitors"
-            className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-white transition shadow-lg shadow-emerald-900/30"
-          >
-            Open Dashboard
-          </a>
-          <a
-            href="https://github.com/Ved10ant/TraceDeck"
-            target="_blank"
-            rel="noreferrer"
-            className="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 font-medium text-slate-200 transition border border-slate-700"
-          >
-            GitHub
-          </a>
-        </div>
-      </div>
-    </main>
+    <SmoothScroll>
+      <div className="dark min-h-screen bg-cosmo-bg text-white flex flex-col selection:bg-cta/25 selection:text-white">
+      {/* 1. Sticky Pill Nav */}
+      <LandingNav />
+
+      <main className="flex-1">
+        {/* 2. Hero with Cosmoq Video Background, Frost, Noise & Parallax */}
+        <HeroSection />
+
+        {/* 3. Built With Marquee */}
+        <MarqueeSection />
+
+        {/* 4. What Sets Us Apart */}
+        <DifferentiatorsSection />
+
+        {/* 5. Tabbed Showcase */}
+        <TabbedShowcase />
+
+        {/* 6. How It Works (01. 02. 03. with Glowing Energy Beam) */}
+        <HowItWorksSection />
+
+        {/* 7. Engineering Deep Dive (Rim-lit Glassmorphic Dark Card) */}
+        <DeepDiveSection />
+
+        {/* 8. Open Source & Self Host */}
+        <SelfHostSection />
+
+        {/* 9. Who It's For */}
+        <AudienceSection />
+
+        {/* 10. FAQ Accordion */}
+        <FaqSection />
+
+        {/* 11. Final Dark Glass CTA Band */}
+        <FinalCtaSection />
+      </main>
+
+      {/* 12. Multi-column Footer */}
+      <LandingFooter />
+    </div>
+    </SmoothScroll>
   );
 }
