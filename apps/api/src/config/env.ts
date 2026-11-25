@@ -22,10 +22,10 @@ const envSchema = z.object({
 export const env = envSchema.parse({
   PORT: process.env.PORT,
   NODE_ENV: process.env.NODE_ENV,
-  JWT_SECRET: process.env.JWT_SECRET,
+  JWT_SECRET:
+    process.env.JWT_SECRET ,
   DATABASE_URL: process.env.DATABASE_URL,
   REDIS_URL: process.env.REDIS_URL,
   ALLOW_PRIVATE_TARGETS: process.env.ALLOW_PRIVATE_TARGETS,
 });
 
-// SupaBase PassWord: TraCeDeck@69
