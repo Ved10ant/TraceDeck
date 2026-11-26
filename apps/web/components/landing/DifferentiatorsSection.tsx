@@ -27,8 +27,8 @@ export function DifferentiatorsSection() {
                   className="h-full rounded-full bg-gradient-to-r from-cosmo-blue to-cyan-400"
                   initial={{ width: "12%" }}
                   whileInView={{ width: `${w}%` }}
-                  viewport={{ once: true, amount: 0.6, margin: "0px 0px -80px 0px" }}
-                  transition={{ duration: 0.85, delay: 0.2 + 0.12 * i, ease: [0.22, 1, 0.36, 1] }}
+                  viewport={{ once: false, amount: 0.4, margin: "0px 0px -60px 0px" }}
+                  transition={{ duration: 0.85, delay: 0.15 + 0.1 * i, ease: [0.22, 1, 0.36, 1] }}
                 />
               </div>
             ))}
@@ -98,15 +98,15 @@ export function DifferentiatorsSection() {
   ];
 
   return (
-    <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-14 relative">
+    <section id="features" className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10 relative">
       {/* Ambient radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-cosmo-blue/10 blur-[140px] rounded-full pointer-events-none" />
 
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4, margin: "0px 0px -100px 0px" }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.3, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center space-y-4 max-w-2xl mx-auto relative z-10"
       >
         <Badge variant="section">EXCEPTIONALITIES</Badge>
@@ -125,10 +125,10 @@ export function DifferentiatorsSection() {
           return (
             <motion.div
               key={item.title}
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 36 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3, margin: "0px 0px -100px 0px" }}
-              transition={{ duration: 0.55, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              viewport={{ once: false, amount: 0.2, margin: "0px 0px -60px 0px" }}
+              transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
               whileHover={prefersReducedMotion ? undefined : { y: -4 }}
               className="p-7 sm:p-8 rounded-card cosmo-glass hover:border-white/25 transition-all duration-300 flex flex-col justify-between group"
             >

@@ -23,12 +23,12 @@ export function SelfHostSection() {
   ];
 
   return (
-    <section id="open-source" className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-16 relative">
+    <section id="open-source" className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10 relative">
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4, margin: "0px 0px -100px 0px" }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.3, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center space-y-4 max-w-2xl mx-auto"
       >
         <Badge variant="section">OPEN SOURCE</Badge>
@@ -41,10 +41,10 @@ export function SelfHostSection() {
       </motion.div>
 
       <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 36 }}
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2, margin: "0px 0px -120px 0px" }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.15, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-3xl mx-auto rounded-3xl cosmo-glass-rim p-8 sm:p-10 space-y-8 relative overflow-hidden"
       >
         {/* Top Header */}

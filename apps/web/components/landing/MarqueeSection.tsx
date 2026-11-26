@@ -9,8 +9,8 @@ import {
   useTransform,
   useMotionValue,
   useVelocity,
-  useAnimationFrame,
   useReducedMotion,
+  useAnimationFrame,
 } from "framer-motion";
 
 function wrap(min: number, max: number, v: number): number {
@@ -182,7 +182,7 @@ export function MarqueeSection() {
   ];
 
   return (
-    <section className="py-14 overflow-hidden select-none relative">
+    <section className="py-10 overflow-hidden select-none relative">
 
       {/* Left and right fade masks */}
       <div className="pointer-events-none absolute inset-y-0 left-0 w-24 sm:w-40 bg-gradient-to-r from-cosmo-bg to-transparent z-10" />
@@ -190,7 +190,7 @@ export function MarqueeSection() {
       <div className="pointer-events-none absolute inset-y-0 right-0 w-24 sm:w-40 bg-gradient-to-l from-cosmo-bg to-transparent z-10" />
 
       {/* Section heading */}
-      <div className="max-w-6xl mx-auto px-4 mb-8 text-center">
+      <div className="max-w-6xl mx-auto px-4 mb-6 text-center">
         <span className="text-[11px] uppercase tracking-widest font-mono font-semibold text-cosmo-muted">
           Built with production-grade open source stack
         </span>

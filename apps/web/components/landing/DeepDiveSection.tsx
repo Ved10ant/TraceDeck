@@ -8,16 +8,16 @@ export function DeepDiveSection() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section id="security" className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative">
+    <section id="security" className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative">
       {/* Ambient blue/orange background glow behind deep dive card */}
       <div className="absolute -inset-4 bg-gradient-to-tr from-cosmo-blue/10 via-transparent to-cta/10 blur-3xl rounded-3xl pointer-events-none" />
 
       <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 40 }}
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 36 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2, margin: "0px 0px -120px 0px" }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-3xl cosmo-glass-rim text-slate-100 p-8 sm:p-12 lg:p-14 space-y-12 relative z-10 overflow-hidden"
+        viewport={{ once: false, amount: 0.15, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className="rounded-3xl cosmo-glass-rim text-slate-100 p-6 sm:p-10 lg:p-12 space-y-8 relative z-10 overflow-hidden"
       >
         <div className="max-w-2xl space-y-4">
           <Badge variant="section">ENGINEERING DEEP DIVE</Badge>

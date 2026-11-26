@@ -16,16 +16,16 @@ export function FinalCtaSection() {
   }, []);
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative">
+    <section className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative">
       {/* Ambient glow */}
       <div className="absolute inset-x-10 top-1/2 -translate-y-1/2 h-64 bg-gradient-to-r from-cosmo-blue/15 via-cta/15 to-cosmo-amber/15 blur-[130px] rounded-full pointer-events-none" />
 
       <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 40 }}
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 36 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25, margin: "0px 0px -120px 0px" }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-3xl cosmo-glass-rim text-white p-8 sm:p-12 lg:p-16 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10 overflow-hidden"
+        viewport={{ once: false, amount: 0.2, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className="rounded-3xl cosmo-glass-rim text-white p-6 sm:p-10 lg:p-12 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10 overflow-hidden"
       >
         {/* Left Side: Copy & Buttons */}
         <div className="space-y-6">

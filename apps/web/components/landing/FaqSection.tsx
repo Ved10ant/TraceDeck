@@ -37,12 +37,12 @@ export function FaqSection() {
   ];
 
   return (
-    <section id="faq" className="py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-12">
+    <section id="faq" className="py-14 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8">
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4, margin: "0px 0px -100px 0px" }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.3, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center space-y-4"
       >
         <Badge variant="section">FAQ</Badge>

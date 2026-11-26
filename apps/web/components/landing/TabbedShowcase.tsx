@@ -19,12 +19,12 @@ export function TabbedShowcase() {
   ] as const;
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-12 relative">
+    <section className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-8 relative">
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4, margin: "0px 0px -100px 0px" }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.3, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center space-y-4 max-w-2xl mx-auto"
       >
         <Badge variant="section">INTERACTIVE WORKFLOW</Badge>
@@ -66,10 +66,10 @@ export function TabbedShowcase() {
 
       {/* Rim-lit Glass Showcase Container */}
       <motion.div
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 36 }}
+        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25, margin: "0px 0px -100px 0px" }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.2, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="rounded-card cosmo-glass-rim p-6 sm:p-8 space-y-6 min-h-[260px]"
       >
         <div className="flex items-center justify-between pb-4 border-b border-white/10">

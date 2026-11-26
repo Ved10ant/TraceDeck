@@ -3,11 +3,11 @@ import { ShieldCheck, Github, ExternalLink } from "lucide-react";
 
 export function LandingFooter() {
   return (
-    <footer className="relative border-t border-white/10 bg-cosmo-bg py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <footer className="relative border-t border-white/10 bg-cosmo-bg py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
       {/* Subtle bottom atmospheric glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[160px] bg-cosmo-blue/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto space-y-12 relative z-10">
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1 space-y-3">

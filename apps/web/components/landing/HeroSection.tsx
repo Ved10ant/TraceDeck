@@ -21,14 +21,14 @@ export function HeroSection() {
     offset: ["start start", "end start"],
   });
 
-  const parallaxMain = useTransform(scrollYProgress, [0, 1], [0, prefersReducedMotion ? 0 : -45]);
-  const parallaxFloatLeft = useTransform(scrollYProgress, [0, 1], [0, prefersReducedMotion ? 0 : -75]);
-  const parallaxFloatRight = useTransform(scrollYProgress, [0, 1], [0, prefersReducedMotion ? 0 : -65]);
+  const parallaxMain = useTransform(scrollYProgress, [0, 1], [0, prefersReducedMotion ? 0 : -95]);
+  const parallaxFloatLeft = useTransform(scrollYProgress, [0, 1], [0, prefersReducedMotion ? 0 : -95]);
+  const parallaxFloatRight = useTransform(scrollYProgress, [0, 1], [0, prefersReducedMotion ? 0 : -95]);
 
   return (
     <section
       ref={containerRef}
-      className="relative pt-32 pb-24 md:pt-40 md:pb-36 px-4 sm:px-6 lg:px-8 overflow-hidden bg-cosmo-bg"
+      className="relative pt-28 pb-14 md:pt-32 md:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden bg-cosmo-bg"
     >
       {/* Cosmoq Background Video Layer + Subtle Frost + Noise */}
       <div className="absolute top-0 left-0 right-0 h-[860px] pointer-events-none overflow-hidden cosmo-video-mask z-0">
@@ -104,33 +104,65 @@ export function HeroSection() {
         </motion.p>
 
         {/* Action Buttons */}
+
+        {/* Action Buttons */}
         <motion.div
           initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.24 }}
+          transition={{ duration: 0.75, delay: 0.24 }}
           className="flex flex-wrap items-center justify-center gap-4 pt-2"
         >
-          <Button href={isAuthenticated ? "/dashboard" : "/register"} size="lg" withArrow>
+          {/* Get Started - Glass Primary */}
+          <Button
+            href={isAuthenticated ? "/dashboard" : "/register"}
+            size="lg"
+            withArrow
+            className="
+      !bg-white/[0.05]
+      !backdrop-blur-2xl
+      !border !border-white/35
+      !text-white
+      shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.2)]
+      hover:!bg-white/[0.16]
+      hover:!border-white/40
+      hover:shadow-[0_8px_35px_rgba(100,140,255,0.18),inset_0_1px_1px_rgba(255,255,255,0.3)]
+      transition-all duration-300
+    "
+          >
             Get Started
           </Button>
+
+          {/* GitHub - Subtle Glass */}
           <Button
             href="https://github.com/Ved10ant/TraceDeck"
             variant="secondary"
             size="lg"
-            className="gap-2"
+            className="
+      gap-2
+      !bg-white/[0.05]
+      !backdrop-blur-2xl
+      !border !border-white/25
+      !text-white/90
+      shadow-[0_6px_24px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.12)]
+      hover:!bg-white/[0.11]
+      hover:!border-white/30
+      hover:!text-white
+      transition-all duration-300
+    "
           >
-            <Github className="w-4 h-4" />
+            {/* <Github className="w-4 h-4" /> */}
             View on GitHub
           </Button>
         </motion.div>
+
 
         {/* Hero Art: Rim-lit Glassmorphism Dashboard Composition with Parallax */}
         <motion.div
           style={{ y: parallaxMain }}
           initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 45 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
-          className="pt-12 relative max-w-4xl mx-auto"
+          transition={{ duration: 0.75, delay: 1, ease: [1.22, 1, 0.36, 1] }}
+          className="pt-8 relative max-w-4xl mx-auto"
         >
           {/* Floating Left Glass Card (Desktop Parallax) */}
           <motion.div

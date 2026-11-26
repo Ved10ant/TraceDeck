@@ -35,12 +35,12 @@ export function AudienceSection() {
   ];
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-14">
+    <section className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10">
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4, margin: "0px 0px -100px 0px" }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.3, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center space-y-4 max-w-2xl mx-auto"
       >
         <Badge variant="section">USE CASES</Badge>
@@ -60,8 +60,8 @@ export function AudienceSection() {
               key={a.title}
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3, margin: "0px 0px -100px 0px" }}
-              transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              viewport={{ once: false, amount: 0.25, margin: "0px 0px -60px 0px" }}
+              transition={{ duration: 0.45, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
               whileHover={prefersReducedMotion ? undefined : { y: -4 }}
               className="p-6 rounded-card cosmo-glass hover:border-white/25 transition-all duration-300 space-y-4"
             >

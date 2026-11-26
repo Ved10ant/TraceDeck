@@ -28,12 +28,12 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-16 relative">
+    <section id="how-it-works" className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10 relative">
       <motion.div
         initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4, margin: "0px 0px -100px 0px" }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.3, margin: "0px 0px -60px 0px" }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center space-y-4 max-w-2xl mx-auto"
       >
         <Badge variant="section">ARCHITECTURE FLOW</Badge>
@@ -59,10 +59,10 @@ export function HowItWorksSection() {
           {steps.map((s, idx) => (
             <motion.div
               key={s.step}
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 36 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 32 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3, margin: "0px 0px -100px 0px" }}
-              transition={{ duration: 0.55, delay: idx * 0.12, ease: [0.22, 1, 0.36, 1] }}
+              viewport={{ once: false, amount: 0.25, margin: "0px 0px -60px 0px" }}
+              transition={{ duration: 0.5, delay: idx * 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="p-8 rounded-card cosmo-glass hover:border-white/25 transition-all duration-300 space-y-4 relative group"
             >
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-black/60 border border-white/15 font-stat font-bold text-lg text-cta shadow-[0_0_20px_rgba(255,90,31,0.2)] group-hover:scale-105 transition-transform">
