@@ -5,3 +5,7 @@ dist/
 out/
 coverage/
 *.log
+
+# Docker secrets - never commit
+.env.docker
+

@@ -1,18 +1,26 @@
+# TraceDeck — Self-hosted Docker Compose
+# ─────────────────────────────────────────────────────────────
+# BEFORE RUNNING:
+#   1. Copy .env.docker.example → .env.docker
+#   2. Fill in POSTGRES_PASSWORD, JWT_SECRET (use strong random values)
+#   3. Run: docker compose --env-file .env.docker up -d
+# ─────────────────────────────────────────────────────────────
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: tracedeck-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: tracedeck
-      POSTGRES_PASSWORD: tracedeck_password
-      POSTGRES_DB: tracedeck
+      POSTGRES_USER: ${POSTGRES_USER:-tracedeck}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tracedeck}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tracedeck -d tracedeck"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tracedeck} -d ${POSTGRES_DB:-tracedeck}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,12 +29,13 @@ services:
     image: redis:7-alpine
     container_name: tracedeck-redis
     restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -42,10 +51,12 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: postgresql://tracedeck:tracedeck_password@postgres:5432/tracedeck?schema=public
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET: production-super-secret-jwt-key-tracedeck-2026
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tracedeck}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tracedeck}?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOW_PRIVATE_TARGETS: "false"
+      MAX_CONCURRENT_CHECKS: ${MAX_CONCURRENT_CHECKS:-10}
+      DEFAULT_CHECK_TIMEOUT_MS: ${DEFAULT_CHECK_TIMEOUT_MS:-10000}
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,9 +71,11 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://tracedeck:tracedeck_password@postgres:5432/tracedeck?schema=public
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tracedeck}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tracedeck}?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      ALLOW_PRIVATE_TARGETS: "false"
+      MAX_CONCURRENT_CHECKS: ${MAX_CONCURRENT_CHECKS:-10}
+      DEFAULT_CHECK_TIMEOUT_MS: ${DEFAULT_CHECK_TIMEOUT_MS:-10000}
     depends_on:
       postgres:
         condition: service_healthy
